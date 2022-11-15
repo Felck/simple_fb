@@ -51,6 +51,7 @@ static ssize_t fb_read(struct file *file, char __user *buf, size_t len, loff_t *
 
   src = info.base + *ppos;
 
+  // read in blocks of size PAGE_SIZE
   while (len) {
     c = (len > PAGE_SIZE) ? PAGE_SIZE : len;
 
@@ -103,6 +104,7 @@ static ssize_t fb_write(struct file *file, const char __user *buf, size_t len, l
 
   dst = info.base + *ppos;
 
+  // write in blocks of size PAGE_SIZE
   while (len) {
     c = (len > PAGE_SIZE) ? PAGE_SIZE : len;
 
@@ -158,6 +160,10 @@ static const struct file_operations fops =
   .unlocked_ioctl = fb_ioctl
 };
 
+/**
+ * Reads framebuffer meta data from the kernel struct 'screeninfo'.
+ * 'screeninfo' is filled in by the bootloader.
+ */
 static int fb_probe(void) {
   __u32 size = screen_info.lfb_height * screen_info.lfb_linelength;
   if (size % PAGE_SIZE)
@@ -167,7 +173,6 @@ static int fb_probe(void) {
   if((info.base = memremap(screen_info.lfb_base, size, MEMREMAP_WB)) < 0) {
     pr_err("memremap error");
   }
-
 
   info.width        = screen_info.lfb_width;
   info.height       = screen_info.lfb_height;
